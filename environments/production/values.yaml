@@ -1,0 +1,38 @@
+global:
+  image:
+    repository: acrhmezouarprf2026.azurecr.io/kube-microservices
+    tag: "23369542"
+    pullPolicy: IfNotPresent
+  scheduling:
+    strictZoneAntiAffinity: false
+
+resourcePolicy:
+  resourceQuota:
+    hard:
+      requests.cpu: "400m"
+      requests.memory: "256Mi"
+      limits.cpu: "800m"
+      limits.memory: "512Mi"
+      pods: "5"
+
+api:
+  replicaCount: 1
+  podDisruptionBudget:
+    enabled: false
+  service:
+    type: LoadBalancer
+    port: 80
+    targetPort: 8080
+    nodePort: null
+    loadBalancerSourceRanges:
+      - "93.93.43.119/32"
+
+books:
+  replicaCount: 1
+  podDisruptionBudget:
+    enabled: false
+
+movies:
+  replicaCount: 1
+  podDisruptionBudget:
+    enabled: false
