@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: {{ .Release.Name }}-books
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+
+spec:
+  replicas: {{ .Values.books.replicaCount }}
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: {{ .Values.books.strategy.maxUnavailable }}
+      maxSurge: {{ .Values.books.strategy.maxSurge }}
+
+  selector:
+    matchLabels:
+      app: books
+
+  template:
+    metadata:
+      labels:
+        app: books
+
+    spec:
+      {{- if .Values.global.scheduling.strictZoneAntiAffinity }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - books
+              topologyKey: {{ .Values.global.scheduling.topologyKey }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values: [api, books, movies]
+                topologyKey: kubernetes.io/hostname
+      {{- end }}
+
+      containers:
+        - name: books
+          image: {{ .Values.global.image.repository }}:{{ .Values.global.image.tag }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+
+          command:
+            {{- toYaml .Values.books.command | nindent 12 }}
+
+          ports:
+            - containerPort: {{ .Values.books.service.targetPort }}
+
+          {{- with .Values.books.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with .Values.books.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with .Values.books.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          resources:
+            {{- toYaml .Values.books.resources | nindent 12 }}

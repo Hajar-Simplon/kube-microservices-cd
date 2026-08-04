@@ -1,0 +1,38 @@
+{{- if .Values.api.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-api
+  namespace: {{ .Release.Namespace }}
+spec:
+  minAvailable: {{ .Values.api.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      app: api
+{{- end }}
+{{- if .Values.books.podDisruptionBudget.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-books
+  namespace: {{ .Release.Namespace }}
+spec:
+  minAvailable: {{ .Values.books.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      app: books
+{{- end }}
+{{- if .Values.movies.podDisruptionBudget.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-movies
+  namespace: {{ .Release.Namespace }}
+spec:
+  minAvailable: {{ .Values.movies.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      app: movies
+{{- end }}

@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: {{ .Release.Name }}-movies
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+
+spec:
+  replicas: {{ .Values.movies.replicaCount }}
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: {{ .Values.movies.strategy.maxUnavailable }}
+      maxSurge: {{ .Values.movies.strategy.maxSurge }}
+
+  selector:
+    matchLabels:
+      app: movies
+
+  template:
+    metadata:
+      labels:
+        app: movies
+
+    spec:
+      {{- if .Values.global.scheduling.strictZoneAntiAffinity }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - movies
+              topologyKey: {{ .Values.global.scheduling.topologyKey }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values: [api, books, movies]
+                topologyKey: kubernetes.io/hostname
+      {{- end }}
+      
+      containers:
+        - name: movies
+          image: {{ .Values.global.image.repository }}:{{ .Values.global.image.tag }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+
+          command:
+            {{- toYaml .Values.movies.command | nindent 12 }}
+
+          ports:
+            - containerPort: {{ .Values.movies.service.targetPort }}
+
+          {{- with .Values.movies.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with .Values.movies.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          {{- with .Values.movies.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          resources:
+            {{- toYaml .Values.movies.resources | nindent 12 }}

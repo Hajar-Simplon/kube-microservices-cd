@@ -1,0 +1,31 @@
+{{- if .Values.resourcePolicy.limitRange.enabled }}
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: {{ .Release.Name }}-container-limits
+  namespace: {{ .Release.Namespace }}
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+{{ toYaml .Values.resourcePolicy.limitRange.container.defaultRequest | nindent 8 }}
+      default:
+{{ toYaml .Values.resourcePolicy.limitRange.container.default | nindent 8 }}
+      min:
+{{ toYaml .Values.resourcePolicy.limitRange.container.min | nindent 8 }}
+      max:
+{{ toYaml .Values.resourcePolicy.limitRange.container.max | nindent 8 }}
+{{- end }}
+{{- if and .Values.resourcePolicy.limitRange.enabled .Values.resourcePolicy.resourceQuota.enabled }}
+---
+{{- end }}
+{{- if .Values.resourcePolicy.resourceQuota.enabled }}
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: {{ .Release.Name }}-compute-quota
+  namespace: {{ .Release.Namespace }}
+spec:
+  hard:
+{{ toYaml .Values.resourcePolicy.resourceQuota.hard | nindent 4 }}
+{{- end }}

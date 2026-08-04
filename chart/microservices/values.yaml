@@ -1,0 +1,104 @@
+global:
+  image:
+    repository: kube-microservices
+    pullPolicy: IfNotPresent
+    tag: "1.0.0"
+
+  scheduling:
+    # Kind uses three zones. The one-node AKS setup disables this option.
+    strictZoneAntiAffinity: true
+    topologyKey: topology.kubernetes.io/zone
+
+resourcePolicy:
+  limitRange:
+    enabled: true
+    container:
+      defaultRequest:
+        cpu: "50m"
+        memory: "64Mi"
+      default:
+        cpu: "250m"
+        memory: "256Mi"
+      min:
+        cpu: "10m"
+        memory: "16Mi"
+      max:
+        cpu: "500m"
+        memory: "512Mi"
+  resourceQuota:
+    enabled: true
+    hard:
+      requests.cpu: "1200m"
+      requests.memory: "768Mi"
+      limits.cpu: "2400m"
+      limits.memory: "1536Mi"
+      pods: "10"
+
+
+-commonAppConfig: &commonAppConfig
+  replicaCount: 3
+
+  containerPort: 8080
+  
+  # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8080
+    failureThreshold: 3
+    periodSeconds: 10
+    timeoutSeconds: 2
+
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 8080
+    failureThreshold: 3
+    periodSeconds: 10
+    timeoutSeconds: 2
+
+  startupProbe:
+    httpGet:
+      path: /health
+      port: 8080
+    failureThreshold: 12
+    periodSeconds: 5
+    timeoutSeconds: 2
+
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+
+  strategy:
+    maxUnavailable: 1
+    maxSurge: 1
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "100m"
+    limits:
+      memory: "128Mi"
+      cpu: "200m"
+
+books:
+  <<: *commonAppConfig
+  command: ["/app/books"]
+
+movies:
+  <<: *commonAppConfig
+  command: ["/app/movies"]
+
+api:
+  <<: *commonAppConfig
+  command: ["/app/api"]
+  service:
+    type: NodePort
+    port: 80
+    targetPort: 8080
+    nodePort: 30080

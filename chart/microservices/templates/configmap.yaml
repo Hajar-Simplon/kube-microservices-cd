@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: {{ .Release.Name }}-api-config
+  namespace: {{ .Release.Namespace }}
+
+data:
+  BOOKS_API_HOST: books-service
+  MOVIES_API_HOST: movies-service
