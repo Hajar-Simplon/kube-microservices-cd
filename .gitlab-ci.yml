@@ -16,6 +16,7 @@ variables:
     - az login --service-principal --username "$AZURE_CLIENT_ID" --tenant "$AZURE_TENANT_ID" --federated-token "$GITLAB_OIDC_TOKEN"
     - az account set --subscription "$AZURE_SUBSCRIPTION_ID"
     - az aks install-cli
+    - tdnf install -y tar gzip
     - curl -fsSLo helm.tar.gz "https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz"
     - tar -xzf helm.tar.gz
     - install linux-amd64/helm /usr/local/bin/helm
